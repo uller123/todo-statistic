@@ -12,7 +12,11 @@ function getFiles() {
 }
 
 function processCommand(command) {
-    switch (command) {
+    // Разбиваем команду на части
+    const parts = command.split(' ');
+    const mainCommand = parts[0].toLowerCase(); // основная команда (show, user, exit)
+    
+    switch (mainCommand) {
         case 'exit':
             process.exit(0);
             break;
@@ -20,6 +24,13 @@ function processCommand(command) {
         case 'show':
             const todos = getAllTodos();
             todos.forEach(todo => console.log(todo));
+            break;
+        
+        case 'user':
+            let username = parts[1];
+            username = username.replace('{', '').replace('}', '');
+            const userTodos = getTodosByUser(username);
+            userTodos.forEach(todo => console.log(todo));
             break;
 
         default:
@@ -31,19 +42,38 @@ function processCommand(command) {
 function getAllTodos() {
     const filePaths = getAllFilePathsWithExtension(process.cwd(), 'js');
     const todos = [];
-
     for (const filePath of filePaths) {
         const content = readFile(filePath);
         const lines = content.split('\n');
-
         for (const line of lines) {
             const trimmed = line.trim();
-
             if (trimmed.startsWith('// TODO ')) {
                 todos.push(trimmed);
             }
         }
     }
-
     return todos;
+}
+
+function getTodosByUser(username) {
+    const filePaths = getAllFilePathsWithExtension(process.cwd(), 'js');
+    const userTodos = [];
+    
+    for (const filePath of filePaths) {
+        const content = readFile(filePath);
+        const lines = content.split('\n');
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('// TODO ')) {
+                const todoContent = trimmed.substring(8);
+                const parts = todoContent.split(';');
+                const author = parts[0].trim();
+                if (author.toLowerCase() === username.toLowerCase()) {
+                    userTodos.push(trimmed);
+                }
+            }
+        }
+    }
+    
+    return userTodos;
 }
